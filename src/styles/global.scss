@@ -1,0 +1,41 @@
+:root {
+  --color-bg: #121212;
+  --color-surface: #1c1c1e;
+  --color-surface-alt: #242426;
+  --color-border: #333336;
+  --color-text: #e8e8ea;
+  --color-text-muted: #9a9aa0;
+  --color-accent: #5b8def;
+  --color-accent-hover: #7aa2f7;
+  --color-danger: #ff6b6b;
+  --radius: 10px;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  background: transparent;
+  color: var(--color-text);
+  font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+}
+
+a {
+  color: var(--color-accent);
+
+  &:hover {
+    color: var(--color-accent-hover);
+  }
+}
+
+button {
+  font-family: inherit;
+}

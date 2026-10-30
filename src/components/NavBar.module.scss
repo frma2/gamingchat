@@ -1,0 +1,119 @@
+.bar {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  padding: 0.6rem 1.25rem;
+  background: var(--color-surface);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.user {
+  font-size: 0.9rem;
+  color: var(--color-text-muted);
+}
+
+.menu {
+  position: relative;
+}
+
+.menuButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  padding: 0;
+  background: transparent;
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  color: var(--color-text);
+  cursor: pointer;
+
+  &:hover {
+    color: var(--color-accent);
+    border-color: var(--color-accent);
+  }
+}
+
+.dropdown {
+  position: absolute;
+  top: calc(100% + 0.4rem);
+  right: 0;
+  min-width: 10rem;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+  overflow: hidden;
+  z-index: 10;
+}
+
+.dropdownItem {
+  display: block;
+  width: 100%;
+  padding: 0.6rem 0.9rem;
+  font-size: 0.85rem;
+  color: var(--color-text);
+  text-decoration: none;
+  text-align: left;
+
+  &:hover {
+    background: var(--color-surface-alt);
+    color: var(--color-accent);
+  }
+}
+
+.dropdownItemButton {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  font: inherit;
+}
+
+.dropdownItemActive {
+  color: var(--color-accent);
+  font-weight: 600;
+}
+
+.dropdownSection {
+  border-bottom: 1px solid var(--color-border);
+  padding-bottom: 0.25rem;
+  margin-bottom: 0.25rem;
+}
+
+.dropdownLabel {
+  display: block;
+  padding: 0.5rem 0.9rem 0.1rem;
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--color-text-muted);
+}
+
+.dropdownItemDanger {
+  color: var(--color-danger);
+
+  &:hover {
+    color: var(--color-danger);
+  }
+}
+
+.signOut {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  padding: 0;
+  background: transparent;
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  color: var(--color-text);
+  cursor: pointer;
+
+  &:hover {
+    color: var(--color-accent);
+    border-color: var(--color-accent);
+  }
+}

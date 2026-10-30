@@ -1,0 +1,83 @@
+.list {
+  list-style: none;
+  margin: 0;
+  padding: 1rem 1.25rem;
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.dayGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.dateDivider {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  margin: 0.4rem 0;
+
+  span {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--color-text-muted);
+    background: var(--color-surface-alt);
+    border-radius: 999px;
+    padding: 0.2rem 0.7rem;
+  }
+}
+
+.dayMessages {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.message {
+  background: var(--color-surface-alt);
+  border-radius: 10px;
+  padding: 0.5rem 0.75rem;
+  max-width: 80%;
+  align-self: flex-start;
+  word-break: break-word;
+}
+
+.user {
+  color: var(--color-accent);
+  font-weight: 600;
+  margin-right: 0.4rem;
+}
+
+.timestamp {
+  display: inline-block;
+  margin-left: 0.5rem;
+  font-size: 0.7rem;
+  color: var(--color-text-muted);
+  vertical-align: bottom;
+}
+
+.message a {
+  color: var(--color-accent);
+  text-decoration: underline;
+  word-break: break-all;
+
+  &:hover {
+    text-decoration: none;
+  }
+}
+
+.gif {
+  display: block;
+  max-width: 220px;
+  max-height: 220px;
+  margin-top: 0.3rem;
+  border-radius: 8px;
+}
