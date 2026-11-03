@@ -7,6 +7,8 @@ import { useAuth } from '../context/AuthContext.jsx'
 import useVoiceChat from '../hooks/useVoiceChat.js'
 import styles from './ChatPage.module.scss'
 
+const STREAM_RECONNECT_MS = 3000
+
 export default function ChatPage() {
   const { user } = useAuth()
   const [publicMessages, setPublicMessages] = useState([])
@@ -61,30 +63,47 @@ export default function ChatPage() {
 
     // consumer echoes each produced message back through this stream
     const params = new URLSearchParams({ user: user?.name ?? 'anonymous' })
-    const source = new EventSource(`/api/messages/stream?${params}`)
+    let source = null
+    let reconnectTimer = null
     let hasConnectedOnce = false
-    source.onopen = () => {
-      // 'open' also fires after the browser auto-reconnects a dropped stream; re-sync in case messages were missed meanwhile
-      if (hasConnectedOnce) {
-        fetchPublicHistory()
-        Object.keys(privateMessagesRef.current).forEach(fetchPrivateHistory)
+
+    const connect = () => {
+      source = new EventSource(`/api/messages/stream?${params}`)
+      source.onopen = () => {
+        // 'open' also fires after a reconnect; re-sync in case messages were missed meanwhile
+        if (hasConnectedOnce) {
+          fetchPublicHistory()
+          Object.keys(privateMessagesRef.current).forEach(fetchPrivateHistory)
+        }
+        hasConnectedOnce = true
       }
-      hasConnectedOnce = true
-    }
-    source.onmessage = (event) => {
-      const message = JSON.parse(event.data)
-      if (message.to) {
-        const otherUser = message.user === user?.name ? message.to : message.user
-        addPrivateMessage(otherUser, message)
-      } else {
-        addPublicMessage(message)
+      source.onmessage = (event) => {
+        const message = JSON.parse(event.data)
+        if (message.to) {
+          const otherUser = message.user === user?.name ? message.to : message.user
+          addPrivateMessage(otherUser, message)
+        } else {
+          addPublicMessage(message)
+        }
       }
+      source.addEventListener('presence', (event) => setOnlineUsers(JSON.parse(event.data)))
+      source.onerror = () => {
+        console.error('Chat stream connection error')
+        // the browser only auto-reconnects after network drops; an error response (e.g. a 502 from the proxy while
+        // the server restarts) closes the stream for good, which would leave us offline and unable to join voice
+        if (source.readyState === EventSource.CLOSED && !reconnectTimer) {
+          reconnectTimer = setTimeout(() => {
+            reconnectTimer = null
+            connect()
+          }, STREAM_RECONNECT_MS)
+        }
+      }
+      setChatStream(source)
     }
-    source.addEventListener('presence', (event) => setOnlineUsers(JSON.parse(event.data)))
-    source.onerror = () => console.error('Chat stream connection error')
-    setChatStream(source)
+    connect()
 
     return () => {
+      clearTimeout(reconnectTimer)
       source.close()
       setChatStream(null)
     }
