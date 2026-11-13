@@ -71,20 +71,23 @@ export default function NavBar() {
                 Galaxy
               </button>
             </div>
-            <Link
-              className={styles.dropdownItem}
-              to="/change-password"
-              onClick={() => setMenuOpen(false)}
-            >
-              Change Password
-            </Link>
-            <Link
-              className={`${styles.dropdownItem} ${styles.dropdownItemDanger}`}
-              to="/delete-account"
-              onClick={() => setMenuOpen(false)}
-            >
-              Delete Account
-            </Link>
+            <div className={styles.dropdownSection}>
+              <span className={styles.dropdownLabel}>Profile</span>
+              <Link
+                className={styles.dropdownItem}
+                to="/change-password"
+                onClick={() => setMenuOpen(false)}
+              >
+                Change Password
+              </Link>
+              <Link
+                className={`${styles.dropdownItem} ${styles.dropdownItemDanger}`}
+                to="/delete-account"
+                onClick={() => setMenuOpen(false)}
+              >
+                Delete Account
+              </Link>
+            </div>
           </div>
         )}
       </div>
