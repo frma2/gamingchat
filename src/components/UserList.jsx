@@ -3,7 +3,6 @@ import styles from './UserList.module.scss'
 export default function UserList({ users, currentUser, activeConversation, onSelect }) {
   return (
     <aside className={styles.sidebar}>
-      <h2 className={styles.heading}>Chats</h2>
       <button
         type="button"
         className={`${styles.publicEntry} ${activeConversation === 'public' ? styles.active : ''}`}

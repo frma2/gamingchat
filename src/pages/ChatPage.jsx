@@ -140,18 +140,20 @@ export default function ChatPage() {
     <div className={styles.page}>
       <div className={styles.layout}>
         <div className={styles.card}>
-          <div className={styles.header}>
-            <h1>{activeConversation === 'public' ? 'Chat' : `Private: ${activeConversation}`}</h1>
+          <UserList
+            users={onlineUsers}
+            currentUser={user?.name}
+            activeConversation={activeConversation}
+            onSelect={handleSelectConversation}
+          />
+          <div className={styles.main}>
+            <div className={styles.header}>
+              <h1>{activeConversation === 'public' ? 'Chat' : `Private: ${activeConversation}`}</h1>
+            </div>
+            <ChatWindow messages={activeMessages} />
+            <MessageInput onSend={handleSend} />
           </div>
-          <ChatWindow messages={activeMessages} />
-          <MessageInput onSend={handleSend} />
         </div>
-        <UserList
-          users={onlineUsers}
-          currentUser={user?.name}
-          activeConversation={activeConversation}
-          onSelect={handleSelectConversation}
-        />
         <VoicePanel voice={voice} currentUser={user?.name} />
       </div>
     </div>
