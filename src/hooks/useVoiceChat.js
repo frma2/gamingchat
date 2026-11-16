@@ -21,9 +21,13 @@ export default function useVoiceChat(source, username) {
   const [joining, setJoining] = useState(false)
   const [muted, setMuted] = useState(false)
   const [remoteStreams, setRemoteStreams] = useState({}) // { [user]: MediaStream }
+  const [remoteCameras, setRemoteCameras] = useState({}) // { [user]: boolean }
+  const [cameraStream, setCameraStream] = useState(null)
+  const [cameraStarting, setCameraStarting] = useState(false)
   const [error, setError] = useState('')
   const joinedRef = useRef(false)
   const localStreamRef = useRef(null)
+  const cameraTrackRef = useRef(null)
   const peersRef = useRef(new Map()) // user -> { pc, pendingCandidates }
   const signalChainRef = useRef(Promise.resolve())
 
@@ -50,19 +54,26 @@ export default function useVoiceChat(source, username) {
     for (const other of [...peersRef.current.keys()]) closePeer(other)
   }
 
-  const createPeer = (other) => {
+  const createPeer = (other, isOfferer) => {
     const pc = new RTCPeerConnection({ iceServers: ICE_SERVERS })
     const peer = { pc, pendingCandidates: [] }
     peersRef.current.set(other, peer)
 
     const localStream = localStreamRef.current
     localStream.getTracks().forEach((track) => pc.addTrack(track, localStream))
+    // a video slot is always negotiated so the camera can be toggled with replaceTrack, without renegotiating;
+    // the answerer reuses the slot from the offer instead (see enableVideoSending)
+    if (isOfferer) pc.addTransceiver(cameraTrackRef.current ?? 'video', { direction: 'sendrecv' })
+    sendSignal(other, { type: 'camera', on: Boolean(cameraTrackRef.current) })
 
     pc.onicecandidate = (event) => {
       if (event.candidate) sendSignal(other, { type: 'candidate', candidate: event.candidate })
     }
-    pc.ontrack = (event) => {
-      setRemoteStreams((prev) => ({ ...prev, [other]: event.streams[0] }))
+    // the stream is rebuilt from the receivers rather than taken from event.streams, since the answerer's
+    // video sender isn't associated with a stream
+    pc.ontrack = () => {
+      const stream = new MediaStream(pc.getReceivers().map((receiver) => receiver.track))
+      setRemoteStreams((prev) => ({ ...prev, [other]: stream }))
     }
     pc.onconnectionstatechange = () => {
       if (pc.connectionState === 'failed') console.error(`Voice connection with ${other} failed`)
@@ -78,8 +89,17 @@ export default function useVoiceChat(source, username) {
     }
   }
 
+  const getVideoTransceiver = (pc) => pc.getTransceivers().find((t) => t.receiver.track.kind === 'video')
+
+  const enableVideoSending = async (pc) => {
+    const transceiver = getVideoTransceiver(pc)
+    if (!transceiver) return
+    transceiver.direction = 'sendrecv'
+    await transceiver.sender.replaceTrack(cameraTrackRef.current)
+  }
+
   const startCall = async (other) => {
-    const { pc } = createPeer(other)
+    const { pc } = createPeer(other, true)
     try {
       await pc.setLocalDescription(await pc.createOffer())
       sendSignal(other, { type: 'offer', sdp: pc.localDescription })
@@ -95,8 +115,9 @@ export default function useVoiceChat(source, username) {
       if (signal.type === 'offer') {
         // a fresh offer replaces any stale connection, e.g. after the other side reconnected
         closePeer(from)
-        const peer = createPeer(from)
+        const peer = createPeer(from, false)
         await peer.pc.setRemoteDescription(signal.sdp)
+        await enableVideoSending(peer.pc)
         await flushPendingCandidates(peer)
         await peer.pc.setLocalDescription(await peer.pc.createAnswer())
         sendSignal(from, { type: 'answer', sdp: peer.pc.localDescription })
@@ -113,6 +134,9 @@ export default function useVoiceChat(source, username) {
         } else {
           peer.pendingCandidates.push(signal.candidate)
         }
+      } else if (signal.type === 'camera') {
+        // kept outside the peer so it survives the closePeer that a following offer triggers
+        setRemoteCameras((prev) => ({ ...prev, [from]: Boolean(signal.on) }))
       }
     } catch (err) {
       console.error(`Failed to handle voice signal from ${from}`, err)
@@ -198,7 +222,52 @@ export default function useVoiceChat(source, username) {
     closeAllPeers()
     localStreamRef.current?.getTracks().forEach((track) => track.stop())
     localStreamRef.current = null
+    cameraTrackRef.current?.stop()
+    cameraTrackRef.current = null
+    setCameraStream(null)
+    setRemoteCameras({})
     postJson('/api/voice/leave', { user: username }).catch((err) => console.error('Failed to leave voice', err))
+  }
+
+  const setCameraTrack = (track) => {
+    cameraTrackRef.current = track
+    setCameraStream(track ? new MediaStream([track]) : null)
+    for (const [other, { pc }] of peersRef.current) {
+      getVideoTransceiver(pc)
+        ?.sender.replaceTrack(track)
+        .catch((err) => console.error(`Failed to update camera for ${other}`, err))
+      sendSignal(other, { type: 'camera', on: Boolean(track) })
+    }
+  }
+
+  const toggleCamera = async () => {
+    if (!joinedRef.current || cameraStarting) return
+    if (cameraTrackRef.current) {
+      cameraTrackRef.current.stop()
+      setCameraTrack(null)
+      return
+    }
+    setError('')
+    setCameraStarting(true)
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' } })
+      const [track] = stream.getVideoTracks()
+      // the user may have left voice while the permission prompt was open
+      if (!joinedRef.current) {
+        track.stop()
+        return
+      }
+      // e.g. the camera is unplugged or another app takes it over
+      track.onended = () => {
+        if (cameraTrackRef.current === track) setCameraTrack(null)
+      }
+      setCameraTrack(track)
+    } catch (err) {
+      console.error('Failed to access camera', err)
+      setError('Could not access your camera.')
+    } finally {
+      setCameraStarting(false)
+    }
   }
 
   const toggleMute = () => {
@@ -214,5 +283,19 @@ export default function useVoiceChat(source, username) {
   leaveRef.current = leave
   useEffect(() => () => leaveRef.current(), [])
 
-  return { participants, joined, joining, muted, remoteStreams, error, join, leave, toggleMute }
+  return {
+    participants,
+    joined,
+    joining,
+    muted,
+    remoteStreams,
+    remoteCameras,
+    cameraStream,
+    cameraStarting,
+    error,
+    join,
+    leave,
+    toggleMute,
+    toggleCamera,
+  }
 }
