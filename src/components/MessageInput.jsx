@@ -8,6 +8,9 @@ const EMOJIS = [
 ]
 
 const GIF_SEARCH_DEBOUNCE_MS = 400
+// must match MAX_IMAGE_BYTES and IMAGE_MIME_TYPES in server.js
+const MAX_IMAGE_BYTES = 5 * 1024 * 1024
+const IMAGE_MIME_TYPES = ['image/png', 'image/jpeg', 'image/gif', 'image/webp']
 
 export default function MessageInput({ onSend }) {
   const [text, setText] = useState('')
@@ -17,6 +20,9 @@ export default function MessageInput({ onSend }) {
   const [gifResults, setGifResults] = useState([])
   const [gifLoading, setGifLoading] = useState(false)
   const [gifError, setGifError] = useState('')
+  const [imageUploading, setImageUploading] = useState(false)
+  const [imageError, setImageError] = useState('')
+  const imageInputRef = useRef(null)
   const pickerRef = useRef(null)
   const emojiButtonRef = useRef(null)
   const gifPickerRef = useRef(null)
@@ -111,6 +117,39 @@ export default function MessageInput({ onSend }) {
     setGifResults([])
   }
 
+  const handleImageSelect = async (e) => {
+    const file = e.target.files?.[0]
+    // cleared so picking the same file again still fires onChange
+    e.target.value = ''
+    if (!file) return
+    setImageError('')
+    if (!IMAGE_MIME_TYPES.includes(file.type)) {
+      setImageError('Only PNG, JPEG, GIF and WebP images are supported')
+      return
+    }
+    if (file.size > MAX_IMAGE_BYTES) {
+      setImageError('Image must be 5 MB or smaller')
+      return
+    }
+    setImageUploading(true)
+    try {
+      const res = await fetch('/api/uploads', {
+        method: 'POST',
+        headers: { 'Content-Type': file.type },
+        body: file,
+      })
+      if (res.status === 413) throw new Error('Image must be 5 MB or smaller')
+      const result = await res.json()
+      if (!res.ok) throw new Error(result?.error || `Upload failed: ${res.status}`)
+      await onSend({ imageUrl: result.url })
+    } catch (err) {
+      console.error('Failed to upload image', err)
+      setImageError(err.message)
+    } finally {
+      setImageUploading(false)
+    }
+  }
+
   return (
     <form onSubmit={handleSubmit} className={styles.form}>
       <div className={styles.row}>
@@ -187,6 +226,25 @@ export default function MessageInput({ onSend }) {
             </div>
           </div>
         )}
+        <button
+          type="button"
+          className={styles.imageToggle}
+          onClick={() => imageInputRef.current?.click()}
+          disabled={imageUploading}
+          aria-label="Upload picture"
+          title="Upload picture"
+        >
+          <span className={styles.cameraIcon}>📷</span>
+        </button>
+        <input
+          ref={imageInputRef}
+          type="file"
+          accept={IMAGE_MIME_TYPES.join(',')}
+          onChange={handleImageSelect}
+          hidden
+        />
+        {imageUploading && <span className={styles.status}>Uploading…</span>}
+        {!imageUploading && imageError && <span className={`${styles.status} ${styles.error}`}>{imageError}</span>}
       </div>
     </form>
   )

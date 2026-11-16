@@ -25,7 +25,11 @@ export default function ChatWindow({ messages }) {
             {group.messages.map((message) => (
               <li key={message.id} className={styles.message}>
                 <strong className={styles.user}>{message.user}:</strong>{' '}
-                {message.gifUrl ? (
+                {message.imageUrl ? (
+                  <a href={message.imageUrl} target="_blank" rel="noopener noreferrer">
+                    <img src={message.imageUrl} alt="uploaded picture" className={styles.image} loading="lazy" />
+                  </a>
+                ) : message.gifUrl ? (
                   <img src={message.gifUrl} alt="gif" className={styles.gif} />
                 ) : (
                   linkify(message.text)

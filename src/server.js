@@ -1,4 +1,8 @@
 import { randomUUID } from 'crypto'
+import { mkdirSync } from 'node:fs'
+import { writeFile } from 'node:fs/promises'
+import path from 'node:path'
+import { fileURLToPath } from 'node:url'
 import express from 'express'
 import cors from 'cors'
 import { sendChatMessage, startChatConsumer } from './kafka/chat_kafka.js'
@@ -29,6 +33,24 @@ function isGiphyUrl(url) {
   } catch {
     return false
   }
+}
+
+// images live on disk and only their url goes through Kafka, keeping messages well under Kafka's 1 MB limit
+const UPLOADS_DIR = path.join(path.dirname(fileURLToPath(import.meta.url)), '..', 'data', 'uploads')
+mkdirSync(UPLOADS_DIR, { recursive: true })
+const MAX_IMAGE_BYTES = 5 * 1024 * 1024
+// SVG is deliberately not accepted since it can carry script
+const IMAGE_MIME_TYPES = ['image/png', 'image/jpeg', 'image/gif', 'image/webp']
+const UPLOAD_URL_PATTERN = /^\/api\/uploads\/[0-9a-f-]{36}\.(png|jpg|gif|webp)$/
+
+// the file type is taken from its signature bytes rather than the client-supplied Content-Type
+function detectImageExtension(buf) {
+  if (buf.length >= 8 && buf.subarray(0, 8).equals(Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]))) return 'png'
+  if (buf.length >= 3 && buf[0] === 0xff && buf[1] === 0xd8 && buf[2] === 0xff) return 'jpg'
+  const header = buf.subarray(0, 12).toString('latin1')
+  if (header.startsWith('GIF87a') || header.startsWith('GIF89a')) return 'gif'
+  if (header.startsWith('RIFF') && header.slice(8, 12) === 'WEBP') return 'webp'
+  return null
 }
 
 
@@ -204,16 +226,48 @@ app.get('/api/gifs/search', async (req, res) => {
   }
 })
 
+app.post('/api/uploads', express.raw({ type: IMAGE_MIME_TYPES, limit: MAX_IMAGE_BYTES }), async (req, res) => {
+  const extension = Buffer.isBuffer(req.body) ? detectImageExtension(req.body) : null
+  if (!extension) {
+    return res.status(400).json({ error: 'Only PNG, JPEG, GIF and WebP images are supported' })
+  }
+  const filename = `${randomUUID()}.${extension}`
+  try {
+    await writeFile(path.join(UPLOADS_DIR, filename), req.body)
+    res.status(201).json({ url: `/api/uploads/${filename}` })
+  } catch (err) {
+    console.error('Failed to save upload', err)
+    res.status(500).json({ error: 'Failed to save image' })
+  }
+})
+
+app.use(
+  '/api/uploads',
+  express.static(UPLOADS_DIR, {
+    index: false,
+    immutable: true,
+    maxAge: '30d',
+    setHeaders: (res) => {
+      res.set('X-Content-Type-Options', 'nosniff')
+      res.set('Content-Security-Policy', "default-src 'none'")
+    },
+  })
+)
+
 app.post('/api/messages', async (req, res) => {
-  const { text, user, to, gifUrl } = req.body ?? {}
+  const { text, user, to, gifUrl, imageUrl } = req.body ?? {}
   const trimmedText = typeof text === 'string' ? text.trim() : ''
   const trimmedGifUrl = typeof gifUrl === 'string' ? gifUrl.trim() : ''
+  const trimmedImageUrl = typeof imageUrl === 'string' ? imageUrl.trim() : ''
 
-  if (!trimmedText && !trimmedGifUrl) {
-    return res.status(400).json({ error: 'text or gifUrl is required' })
+  if (!trimmedText && !trimmedGifUrl && !trimmedImageUrl) {
+    return res.status(400).json({ error: 'text, gifUrl or imageUrl is required' })
   }
   if (trimmedGifUrl && !isGiphyUrl(trimmedGifUrl)) {
     return res.status(400).json({ error: 'invalid gifUrl' })
+  }
+  if (trimmedImageUrl && !UPLOAD_URL_PATTERN.test(trimmedImageUrl)) {
+    return res.status(400).json({ error: 'invalid imageUrl' })
   }
 
   const message = {
@@ -224,6 +278,9 @@ app.post('/api/messages', async (req, res) => {
   }
   if (trimmedGifUrl) {
     message.gifUrl = trimmedGifUrl
+  }
+  if (trimmedImageUrl) {
+    message.imageUrl = trimmedImageUrl
   }
   if (typeof to === 'string' && to.trim()) {
     message.to = to.trim()
