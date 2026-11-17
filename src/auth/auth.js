@@ -24,7 +24,7 @@ function generateCode() {
 async function sendVerificationEmail(email, code) {
   if (!isMailerConfigured()) {
     // no SMTP credentials configured for this environment; log instead of sending a real email
-    console.log(`[auth] Verification code for ${email}: ${code}`)
+    //console.log(`[auth] Verification code for ${email}: ${code}`)
     return
   }
 
@@ -32,7 +32,7 @@ async function sendVerificationEmail(email, code) {
     await sendMail({
       to: email,
       subject: 'Your verification code',
-      text: `Your verification code is: ${code}\nIt expires in 10 minutes.`,
+      text: `Your verification code is: ${code}\n`,
     })
   } catch (err) {
     console.error('Failed to send verification email', err)
