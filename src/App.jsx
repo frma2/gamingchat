@@ -10,6 +10,7 @@ import Login from './pages/Login.jsx'
 import Register from './pages/Register.jsx'
 import ChangePassword from './pages/ChangePassword.jsx'
 import DeleteAccount from './pages/DeleteAccount.jsx'
+import styles from './App.module.scss'
 
 export default function App() {
   return (
@@ -17,43 +18,47 @@ export default function App() {
       <BackgroundProvider>
         <Background />
         <BrowserRouter>
-          <NavBar />
-          <Routes>
-            <Route
-              path="/"
-              element={
-                <RequireAuth>
-                  <Home />
-                </RequireAuth>
-              }
-            />
-            <Route
-              path="/chat"
-              element={
-                <RequireAuth>
-                  <ChatPage />
-                </RequireAuth>
-              }
-            />
-            <Route
-              path="/change-password"
-              element={
-                <RequireAuth>
-                  <ChangePassword />
-                </RequireAuth>
-              }
-            />
-            <Route
-              path="/delete-account"
-              element={
-                <RequireAuth>
-                  <DeleteAccount />
-                </RequireAuth>
-              }
-            />
-            <Route path="/login" element={<Login />} />
-            <Route path="/register" element={<Register />} />
-          </Routes>
+          <div className={styles.shell}>
+            <NavBar />
+            <div className={styles.content}>
+              <Routes>
+                <Route
+                  path="/"
+                  element={
+                    <RequireAuth>
+                      <Home />
+                    </RequireAuth>
+                  }
+                />
+                <Route
+                  path="/chat"
+                  element={
+                    <RequireAuth>
+                      <ChatPage />
+                    </RequireAuth>
+                  }
+                />
+                <Route
+                  path="/change-password"
+                  element={
+                    <RequireAuth>
+                      <ChangePassword />
+                    </RequireAuth>
+                  }
+                />
+                <Route
+                  path="/delete-account"
+                  element={
+                    <RequireAuth>
+                      <DeleteAccount />
+                    </RequireAuth>
+                  }
+                />
+                <Route path="/login" element={<Login />} />
+                <Route path="/register" element={<Register />} />
+              </Routes>
+            </div>
+          </div>
         </BrowserRouter>
       </BackgroundProvider>
     </AuthProvider>

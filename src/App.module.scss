@@ -1,0 +1,13 @@
+.shell {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+// takes up the space left over after NavBar so pages sized to "100%" don't overflow the viewport;
+// scrolls internally instead of making the whole page scroll
+.content {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+}
