@@ -1,3 +1,5 @@
+$grid-line: #4b5563;
+
 .panel {
   width: 360px;
   flex-shrink: 0;
@@ -11,15 +13,39 @@
 
 .heading {
   margin: 0;
-  padding: 1rem 1.1rem 0.5rem;
+  padding: 1rem 1.1rem 0.75rem;
   font-size: 0.9rem;
   font-weight: 600;
+  border-bottom: 1px solid $grid-line;
+}
+
+.body {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+}
+
+// widened only while a camera is on, so the camera area doesn't exist until then
+.withCameras {
+  width: 720px;
+}
+
+.sidebar {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+
+  .withCameras & {
+    flex: 0 0 200px;
+    border-right: 1px solid $grid-line;
+  }
 }
 
 .list {
   list-style: none;
   margin: 0;
-  padding: 0 1.1rem 0.5rem;
+  padding: 0.75rem 1.1rem 0.5rem;
   flex: 1;
   min-height: 0;
   overflow-y: auto;
@@ -66,24 +92,37 @@
   font-size: 0.8rem;
 }
 
-.videos {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-  padding: 0 0.75rem 0.5rem;
-  max-height: 50%;
+.cameraArea {
+  flex: 1;
+  min-width: 0;
   overflow-y: auto;
-  flex-shrink: 0;
+}
+
+// each tile draws its own right/bottom line, so a partly filled last row doesn't show empty grey cells
+.cameraGrid {
+  display: grid;
+  grid-template-columns: 1fr;
+}
+
+.twoColumns {
+  grid-template-columns: repeat(2, 1fr);
+}
+
+.threeColumns {
+  grid-template-columns: repeat(3, 1fr);
 }
 
 .tile {
   position: relative;
   margin: 0;
-  border-radius: 6px;
-  overflow: hidden;
-  background: #000;
   aspect-ratio: 4 / 3;
-  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #000;
+  border-right: 1px solid $grid-line;
+  border-bottom: 1px solid $grid-line;
+  overflow: hidden;
 
   video {
     width: 100%;
@@ -114,10 +153,9 @@
 
 .actions {
   display: flex;
-  flex-wrap: wrap;
   gap: 0.5rem;
   padding: 0.6rem 0.75rem;
-  border-top: 1px solid var(--color-border);
+  border-top: 1px solid $grid-line;
 }
 
 .button {

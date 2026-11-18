@@ -11,8 +11,8 @@ function RemoteAudio({ stream }) {
   return <audio ref={audioRef} autoPlay />
 }
 
-// always muted: audio is played by RemoteAudio, and the local preview must not echo the microphone
-function VideoTile({ stream, name, self }) {
+// video is always muted: audio is played by RemoteAudio, and the local preview must not echo the microphone
+function CameraTile({ stream, name, self }) {
   const videoRef = useRef(null)
 
   useEffect(() => {
@@ -25,6 +25,12 @@ function VideoTile({ stream, name, self }) {
       <figcaption className={styles.tileName}>{self ? `${name} (you)` : name}</figcaption>
     </figure>
   )
+}
+
+function cameraGridColumnsClass(count) {
+  if (count >= 6) return styles.threeColumns
+  if (count >= 3) return styles.twoColumns
+  return ''
 }
 
 export default function VoicePanel({ voice, currentUser }) {
@@ -44,30 +50,39 @@ export default function VoicePanel({ voice, currentUser }) {
     toggleCamera,
   } = voice
 
-  const remoteVideos = participants.filter((name) => name !== currentUser && remoteCameras[name] && remoteStreams[name])
+  const cameraStreamFor = (name) => {
+    if (name === currentUser) return cameraStream
+    return remoteCameras[name] ? remoteStreams[name] : null
+  }
+  const activeCameras = participants.filter((name) => cameraStreamFor(name))
 
   return (
-    <section className={styles.panel}>
+    <section className={`${styles.panel} ${activeCameras.length > 0 ? styles.withCameras : ''}`}>
       <h2 className={styles.heading}>🔊 Public Voice ({participants.length})</h2>
-      {(cameraStream || remoteVideos.length > 0) && (
-        <div className={styles.videos}>
-          {cameraStream && <VideoTile stream={cameraStream} name={currentUser} self />}
-          {remoteVideos.map((name) => (
-            <VideoTile key={name} stream={remoteStreams[name]} name={name} />
-          ))}
+      <div className={styles.body}>
+        <div className={styles.sidebar}>
+          <ul className={styles.list}>
+            {participants.map((name) => (
+              <li key={name} className={styles.participant}>
+                <span className={`${styles.dot} ${name !== currentUser && !remoteStreams[name] ? styles.connecting : ''}`} />
+                {name}
+                {name === currentUser && <span className={styles.you}> (you{muted ? ', muted' : ''})</span>}
+              </li>
+            ))}
+            {participants.length === 0 && <li className={styles.empty}>Nobody is talking yet</li>}
+          </ul>
+          {error && <p className={styles.error}>{error}</p>}
         </div>
-      )}
-      <ul className={styles.list}>
-        {participants.map((name) => (
-          <li key={name} className={styles.participant}>
-            <span className={`${styles.dot} ${name !== currentUser && !remoteStreams[name] ? styles.connecting : ''}`} />
-            {name}
-            {name === currentUser && <span className={styles.you}> (you{muted ? ', muted' : ''})</span>}
-          </li>
-        ))}
-        {participants.length === 0 && <li className={styles.empty}>Nobody is talking yet</li>}
-      </ul>
-      {error && <p className={styles.error}>{error}</p>}
+        {activeCameras.length > 0 && (
+          <div className={styles.cameraArea}>
+            <div className={`${styles.cameraGrid} ${cameraGridColumnsClass(activeCameras.length)}`}>
+              {activeCameras.map((name) => (
+                <CameraTile key={name} stream={cameraStreamFor(name)} name={name} self={name === currentUser} />
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
       <div className={styles.actions}>
         {joined ? (
           <>
