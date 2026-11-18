@@ -5,7 +5,7 @@ import UserList from '../components/UserList.jsx'
 import VoicePanel from '../components/VoicePanel.jsx'
 import { useAuth } from '../context/AuthContext.jsx'
 import useVoiceChat from '../hooks/useVoiceChat.js'
-import styles from './ChatPage.module.scss'
+import styles from '../styles/ChatPage.module.scss'
 
 const STREAM_RECONNECT_MS = 3000
 

@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext.jsx'
 import { BACKGROUNDS, useBackground } from '../context/BackgroundContext.jsx'
-import styles from './NavBar.module.scss'
+import styles from '../styles/NavBar.module.scss'
 
 export default function NavBar() {
   const { user, logout } = useAuth()

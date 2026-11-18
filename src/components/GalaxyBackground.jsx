@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react'
-import styles from './GalaxyBackground.module.scss'
+import styles from '../styles/GalaxyBackground.module.scss'
 
 const STAR_COUNT_DENSITY = 0.00012 // stars per pixel of canvas area
 const MAX_DEPTH = 3

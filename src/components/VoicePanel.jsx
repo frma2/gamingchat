@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react'
-import styles from './VoicePanel.module.scss'
+import styles from '../styles/VoicePanel.module.scss'
 
 function RemoteAudio({ stream }) {
   const audioRef = useRef(null)

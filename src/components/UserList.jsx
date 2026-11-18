@@ -1,4 +1,4 @@
-import styles from './UserList.module.scss'
+import styles from '../styles/UserList.module.scss'
 
 export default function UserList({ users, currentUser, activeConversation, onSelect }) {
   return (

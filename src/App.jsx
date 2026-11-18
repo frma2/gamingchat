@@ -10,7 +10,7 @@ import Login from './pages/Login.jsx'
 import Register from './pages/Register.jsx'
 import ChangePassword from './pages/ChangePassword.jsx'
 import DeleteAccount from './pages/DeleteAccount.jsx'
-import styles from './App.module.scss'
+import styles from './styles/App.module.scss'
 
 export default function App() {
   return (

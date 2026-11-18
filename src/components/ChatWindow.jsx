@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react'
-import styles from './ChatWindow.module.scss'
+import styles from '../styles/ChatWindow.module.scss'
 import { linkify } from '../utils/linkify.jsx'
 import { formatTime, groupMessagesByDay } from '../utils/formatDate.js'
 

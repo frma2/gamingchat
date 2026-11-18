@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react'
-import styles from './MatrixBackground.module.scss'
+import styles from '../styles/MatrixBackground.module.scss'
 
 const CHARACTERS =
   'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789ｱｲｳｴｵｶｷｸｹｺｻｼｽｾｿﾀﾁﾂﾃﾄﾅﾆﾇﾈﾉﾊﾋﾌﾍﾎﾏﾐﾑﾒﾓﾔﾕﾖﾗﾘﾙﾚﾛﾜﾝ'

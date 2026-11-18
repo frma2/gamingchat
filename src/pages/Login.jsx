@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext.jsx'
 import { parseJsonResponse } from '../utils/api.js'
-import styles from './Auth.module.scss'
+import styles from '../styles/Auth.module.scss'
 
 export default function Login() {
   const [email, setEmail] = useState('')

@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import styles from './MessageInput.module.scss'
+import styles from '../styles/MessageInput.module.scss'
 
 const EMOJIS = [
   '😀', '😂', '😊', '😍', '😎', '🤔', '😮', '😢',
